@@ -80,7 +80,32 @@ namespace LibraryWebServer.Controllers
         public ActionResult AllTitles()
         {
             // TODO: Implement
-            return Json(null);
+            using (Team59LibraryContext db = new Team59LibraryContext())
+            {
+                var query =
+                    from t in db.Titles
+                    join i in db.Inventory
+                    on t.Isbn equals i.Isbn
+                    select new
+                    {
+                        t.Isbn,
+                        t.Title,
+                        t.Author,
+                        i.Serial,
+                        name = 
+                        from p in db.Patrons
+                        join c in db.CheckedOut
+                        on p.CardNum equals c.CardNum
+                        where c.Serial == i.Serial
+                        select p.Name != null ? p.Name : "" 
+                    };
+
+                //foreach (var item in query)
+                //{
+                //    System.Diagnostics.Debug.WriteLine(item);
+                //}
+            return Json(query.ToArray());
+            }
         }
 
         /// <summary>
