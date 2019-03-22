@@ -102,7 +102,7 @@ namespace LibraryWebServer.Controllers
                         title = t.Title,
                         author = t.Author,
                         serial = ti != null ? (uint?)ti.Serial : null,
-                        name = res != null? res.Name : ""
+                        name = res != null ? res.Name : ""
                     };
                 return Json(query.ToArray());
             }
@@ -137,6 +137,7 @@ namespace LibraryWebServer.Controllers
         {
             // TODO: Implement
             // You may have to cast serial to a (uint)
+
             return Json(new { success = true });
         }
 
@@ -153,6 +154,14 @@ namespace LibraryWebServer.Controllers
         {
             // TODO: Implement
             // You may have to cast serial to a (uint)
+            using (Team59LibraryContext db = new Team59LibraryContext())
+            {
+                CheckedOut c = new CheckedOut();
+                c.Serial = (uint)serial;
+                c.CardNum = (uint)card;
+                db.CheckedOut.Remove(c);
+                db.SaveChanges();
+            }
             return Json(new { success = true });
         }
 
