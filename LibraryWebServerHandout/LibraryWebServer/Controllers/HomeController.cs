@@ -125,7 +125,7 @@ namespace LibraryWebServer.Controllers
                 var query =
                     from t in db.Titles
                     join i in db.Inventory
-                    on t.ISBN equals i.ISBN
+                    on t.Isbn equals i.Isbn
                     into TjoinI
                     from ti in TjoinI.DefaultIfEmpty()
                     join c in db.CheckedOut
