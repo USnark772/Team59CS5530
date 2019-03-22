@@ -86,25 +86,25 @@ namespace LibraryWebServer.Controllers
                     from t in db.Titles
                     join i in db.Inventory
                     on t.Isbn equals i.Isbn
+                    into TJoinI
+                    from ti in TJoinI.DefaultIfEmpty()
+                    join c in db.CheckedOut
+                    on ti.Serial equals c.Serial
+                    into TIJoinC
+                    from tic in TIJoinC.DefaultIfEmpty()
+                    join p in db.Patrons
+                    on tic.CardNum equals p.CardNum
+                    into result
+                    from res in result.DefaultIfEmpty()
                     select new
                     {
-                        t.Isbn,
-                        t.Title,
-                        t.Author,
-                        i.Serial,
-                        name = 
-                        from p in db.Patrons
-                        join c in db.CheckedOut
-                        on p.CardNum equals c.CardNum
-                        where c.Serial == i.Serial
-                        select p.Name != null ? p.Name : "" 
+                        isbn = t.Isbn,
+                        title = t.Title,
+                        author = t.Author,
+                        serial = ti != null ? (uint?)ti.Serial : null,
+                        name = res != null? res.Name : ""
                     };
-
-                //foreach (var item in query)
-                //{
-                //    System.Diagnostics.Debug.WriteLine(item);
-                //}
-            return Json(query.ToArray());
+                return Json(query.ToArray());
             }
         }
 
