@@ -14,6 +14,8 @@ using Microsoft.Extensions.Options;
 using LMS.Models;
 using LMS.Models.AccountViewModels;
 using LMS.Services;
+using System.Diagnostics;
+
 
 namespace LMS.Controllers
 {
@@ -485,25 +487,23 @@ namespace LMS.Controllers
         public string CreateNewUser(string fName, string lName, DateTime DOB, string SubjectAbbrev, string role)
         {
             // TODO: Implement
-            /*var highestUID =
-                (from a in db.Administrators select a.UId).Union(
-                    from p in db.Professors select p.UId).Union(
-                    from s in db.Students select s.UId).OrderByDescending()
-            */
+            Debug.WriteLine("Attempting prevUID");
+            var prevUID = from id in db.Uids orderby id.UId descending select id.UId;
+            foreach (var item in prevUID)
+            {
+                Debug.WriteLine(item);
+            }
             if (role == "Administrator")
                 ;
             else if (role == "Student")
                 ;
             else if (role == "Professor")
                 ;
-            return "";
+            return "u" + (result + 1);
         }
 
         /*******End code to modify********/
-
-
-
-
+        
         #region Helpers
 
         private void AddErrors(IdentityResult result)

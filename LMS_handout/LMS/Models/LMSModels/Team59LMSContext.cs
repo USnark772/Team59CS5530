@@ -25,6 +25,7 @@ namespace LMS.Models.LMSModels
         public virtual DbSet<Professors> Professors { get; set; }
         public virtual DbSet<Students> Students { get; set; }
         public virtual DbSet<Submissions> Submissions { get; set; }
+        public virtual DbSet<Uids> Uids { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -317,6 +318,23 @@ namespace LMS.Models.LMSModels
                     .HasForeignKey(d => d.UId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("Submissions_ibfk_1");
+            });
+
+            modelBuilder.Entity<Uids>(entity =>
+            {
+                entity.HasKey(e => e.UId)
+                    .HasName("PRIMARY");
+
+                entity.ToTable("UIDs");
+
+                entity.Property(e => e.UId)
+                    .HasColumnName("uID")
+                    .HasColumnType("char(8)");
+
+                entity.Property(e => e.Type)
+                    .IsRequired()
+                    .HasColumnName("type")
+                    .HasColumnType("varchar(5)");
             });
         }
     }
