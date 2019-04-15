@@ -15,6 +15,7 @@ using LMS.Models;
 using LMS.Models.AccountViewModels;
 using LMS.Services;
 using System.Diagnostics;
+using LMS.Models.LMSModels;
 
 
 namespace LMS.Controllers
@@ -487,19 +488,18 @@ namespace LMS.Controllers
         public string CreateNewUser(string fName, string lName, DateTime DOB, string SubjectAbbrev, string role)
         {
             // TODO: Implement
-            Debug.WriteLine("Attempting prevUID");
-            var prevUID = from id in db.Uids orderby id.UId descending select id.UId;
-            foreach (var item in prevUID)
-            {
-                Debug.WriteLine(item);
-            }
+            var prevUID = from id in db.Uids orderby id.UId descending select id;
+            UInt32 lastUID = UInt32.Parse(prevUID.SingleOrDefault().UId.Substring(1));
+            UInt32 nextUID = lastUID + 1;
+            string ret = "u" + nextUID.ToString("D7");
+            // TODO: update UIDs table with columns(uID, Type) values(ret, role) where Type is varchar(5) ex. admin, stud, prof
             if (role == "Administrator")
                 ;
             else if (role == "Student")
                 ;
             else if (role == "Professor")
                 ;
-            return "u" + (result + 1);
+            return ret;
         }
 
         /*******End code to modify********/
