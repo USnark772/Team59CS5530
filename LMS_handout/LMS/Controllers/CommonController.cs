@@ -144,7 +144,15 @@ namespace LMS.Controllers
         public IActionResult GetAssignmentContents(string subject, int num, string season, int year, string category, string asgname)
         {
             // TODO: Implement
-            return Content("");
+            var query =
+                from a in db.Assignments
+                where a.Cat.ClassNavigation.Course.AbbrNavigation.Abbr == subject
+                where a.Cat.ClassNavigation.Semester == season + year.ToString()
+                where a.Cat.ClassNavigation.CourseId == num
+                where a.Cat.Name == category
+                where a.Name == asgname
+                select a.Contents;
+            return Content(query.SingleOrDefault());
         }
 
 
@@ -165,6 +173,7 @@ namespace LMS.Controllers
         public IActionResult GetSubmissionText(string subject, int num, string season, int year, string category, string asgname, string uid)
         {
             // TODO: Implement
+
             return Content("");
         }
 
