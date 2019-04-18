@@ -506,7 +506,7 @@ namespace LMS.Controllers
                 a.Dob = DOB;
                 db.Administrators.Add(a);
             }
-                
+
             else if (role == "Student")
             {
                 Students s = new Students();
@@ -517,7 +517,7 @@ namespace LMS.Controllers
                 s.Major = SubjectAbbrev;
                 db.Students.Add(s);
             }
-                
+
             else if (role == "Professor")
             {
                 Professors p = new Professors();
@@ -532,17 +532,17 @@ namespace LMS.Controllers
             try
             {
                 db.SaveChanges();
+                return ret;
             }
             catch
             {
-
+                return "fail";
             }
-                
-            return ret;
+
         }
 
         /*******End code to modify********/
-        
+
         #region Helpers
 
         private void AddErrors(IdentityResult result)

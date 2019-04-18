@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using LMS.Models.LMSModels;
 
 namespace LMS.Controllers
 {
@@ -41,7 +42,16 @@ namespace LMS.Controllers
         public IActionResult GetCourses(string subject)
         {
             // TODO: Implement
-            return Json(null);
+            // Get the department and then use the scaffolded link to get all courses?
+            var query =
+                from c in db.Courses
+                where c.AbbrNavigation.Abbr == subject
+                select new
+                {
+                    name = c.Name,
+                    number = c.Number
+                };
+            return Json(query.ToArray());
         }
 
 
@@ -60,7 +70,16 @@ namespace LMS.Controllers
         public IActionResult GetProfessors(string subject)
         {
             // TODO: Implement
-            return Json(null);
+            var query =
+                from p in db.Professors
+                where p.MajorNavigation.Abbr == subject
+                select new
+                {
+                    lname = p.First,
+                    fname = p.Last,
+                    uid = p.UId
+                };
+            return Json(query.ToArray());
         }
 
 
@@ -77,7 +96,24 @@ namespace LMS.Controllers
         public IActionResult CreateCourse(string subject, int number, string name)
         {
             // TODO: Implement
-            return Json(new { success = false });
+            var cid =
+                from c in db.Courses orderby c.CId descending select c.CId;
+            Courses new_course = new Courses();
+            new_course.Abbr = subject;
+            new_course.Number = (UInt32)number;
+            new_course.Name = name;
+            new_course.CId = cid.SingleOrDefault() + 1;
+            db.Courses.Add(new_course);
+            try
+            {
+                db.SaveChanges();
+                return Json(new { success = true });
+            }
+            catch
+            {
+                return Json(new { success = false });
+            }
+
         }
 
 
@@ -101,7 +137,47 @@ namespace LMS.Controllers
         public IActionResult CreateClass(string subject, int number, string season, int year, DateTime start, DateTime end, string location, string instructor)
         {
             // TODO: Implement
-            return Json(new { success = false });
+            TimeSpan start_time = start.TimeOfDay;
+            TimeSpan end_time = end.TimeOfDay;
+            var other_classes =
+                from c in db.Classes
+                where c.Location == location
+                select new { c.Start, c.End };
+            foreach (var item in other_classes)
+            {
+                if ((start_time <= item.End && start_time >= item.Start)
+                    || (end_time <= item.End && end_time >= item.Start))
+                {
+                    return Json(new { success = false });
+                }
+            }
+            var same_course =
+                from c in db.Classes
+                where c.CourseId == (UInt32)number
+                select c;
+            if(same_course.Count() > 0)
+            {
+                return Json(new { success = false });
+            }
+            var cid =
+                from c in db.Classes orderby c.ClassId descending select c.ClassId;
+            Classes new_class = new Classes();
+            new_class.ClassId = cid.SingleOrDefault() + 1;
+            new_class.CourseId = (UInt32)number;
+            new_class.Start = start.TimeOfDay;
+            new_class.End = end.TimeOfDay;
+            new_class.Location = location;
+            new_class.Semester = season + year.ToString();
+            new_class.UId = instructor;
+            try
+            {
+                db.Classes.Add(new_class);
+                return Json(new { success = true });
+            }
+            catch
+            {
+                return Json(new { success = false });
+            }
         }
 
 
