@@ -483,7 +483,7 @@ namespace LMS.Controllers
         /// <param name="lName">Last Name</param>
         /// <param name="DOB">Date of Birth</param>
         /// <param name="SubjectAbbrev">The department the user belongs to (professors and students only)</param>
-        /// <param name="SubjectAbbrev">The user's role: one of "Administrator", "Professor", "Student"</param> 
+        /// <param name="role">The user's role: one of "Administrator", "Professor", "Student"</param> 
         /// <returns>A unique uID that is not be used by anyone else</returns>
         public string CreateNewUser(string fName, string lName, DateTime DOB, string SubjectAbbrev, string role)
         {
@@ -493,12 +493,51 @@ namespace LMS.Controllers
             UInt32 nextUID = lastUID + 1;
             string ret = "u" + nextUID.ToString("D7");
             // TODO: update UIDs table with columns(uID, Type) values(ret, role) where Type is varchar(5) ex. admin, stud, prof
+            Uids u = new Uids();
+            u.UId = ret;
+            u.Type = role;
+            db.Uids.Add(u);
             if (role == "Administrator")
-                ;
+            {
+                Administrators a = new Administrators();
+                a.UId = ret;
+                a.First = fName;
+                a.Last = lName;
+                a.Dob = DOB;
+                db.Administrators.Add(a);
+            }
+                
             else if (role == "Student")
-                ;
+            {
+                Students s = new Students();
+                s.UId = ret;
+                s.First = fName;
+                s.Last = lName;
+                s.Dob = DOB;
+                s.Major = SubjectAbbrev;
+                db.Students.Add(s);
+            }
+                
             else if (role == "Professor")
-                ;
+            {
+                Professors p = new Professors();
+                p.UId = ret;
+                p.First = fName;
+                p.Last = lName;
+                p.Dob = DOB;
+                p.Major = SubjectAbbrev;
+                db.Professors.Add(p);
+            }
+
+            try
+            {
+                db.SaveChanges();
+            }
+            catch
+            {
+
+            }
+                
             return ret;
         }
 
