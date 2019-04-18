@@ -118,8 +118,8 @@ namespace LMS.Controllers
                 on c.UId equals p.UId
                 select new
                 {
-                    season = "CHANGEME", // need to know where to find this
-                    year = "CHANGEME TOO", // need to know where to find this
+                    season = c.Semester.Substring(0, c.Semester.Length - 4),
+                    year = c.Semester.Substring(c.Semester.Length - 4),
                     location = c.Location,
                     start = c.Start,
                     end = c.End,
