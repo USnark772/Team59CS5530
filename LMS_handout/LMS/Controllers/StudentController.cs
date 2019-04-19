@@ -196,6 +196,7 @@ namespace LMS.Controllers
             new_enroll.UId = uid;
             new_enroll.Grade = "0";
             new_enroll.EId = oldID + 1;
+            db.Enrolled.Add(new_enroll);
             try
             {
                 db.SaveChanges();

@@ -54,10 +54,6 @@ namespace LMS.Controllers
             return Json(query.ToArray());
         }
 
-
-
-
-
         /// <summary>
         /// Returns a JSON array of all the professors working in a given department.
         /// Each object in the array should have the following fields:
@@ -82,8 +78,6 @@ namespace LMS.Controllers
             return Json(query.ToArray());
         }
 
-
-
         /// <summary>
         /// Creates a course.
         /// A course is uniquely identified by its number + the subject to which it belongs
@@ -96,13 +90,30 @@ namespace LMS.Controllers
         public IActionResult CreateCourse(string subject, int number, string name)
         {
             // TODO: Implement
+            var check =
+                from c in db.Courses
+                where c.Abbr == subject
+                && c.Number == number
+                && c.Name == name
+                select c;
+            if (check.Count() > 0)
+            {
+                return Json(new { success = false });
+            }
+            var dept =
+                from d in db.Departments
+                where d.Abbr == subject
+                select d;
             var cid =
                 from c in db.Courses orderby c.CId descending select c.CId;
+            var cid_enum = cid.GetEnumerator();
+            cid_enum.MoveNext();
             Courses new_course = new Courses();
             new_course.Abbr = subject;
+            new_course.AbbrNavigation = dept.SingleOrDefault();
             new_course.Number = (UInt32)number;
             new_course.Name = name;
-            new_course.CId = cid.SingleOrDefault() + 1;
+            new_course.CId = cid_enum.Current + 1;
             db.Courses.Add(new_course);
             try
             {
@@ -115,9 +126,7 @@ namespace LMS.Controllers
             }
 
         }
-
-
-
+        
         /// <summary>
         /// Creates a class offering of a given course.
         /// </summary>
@@ -143,35 +152,44 @@ namespace LMS.Controllers
                 from c in db.Classes
                 where c.Location == location
                 select new { c.Start, c.End };
-            foreach (var item in other_classes)
+            if (other_classes.Count() > 0)
             {
-                if ((start_time <= item.End && start_time >= item.Start)
-                    || (end_time <= item.End && end_time >= item.Start))
+                foreach (var item in other_classes)
+                {
+                    if ((start_time <= item.End && start_time >= item.Start)
+                        || (end_time <= item.End && end_time >= item.Start))
+                    {
+                        return Json(new { success = false });
+                    }
+                }
+                var same_course =
+                    from c in db.Classes
+                    where c.CourseId == (UInt32)number
+                    select c;
+                if (same_course.Count() > 0)
                 {
                     return Json(new { success = false });
                 }
             }
-            var same_course =
-                from c in db.Classes
-                where c.CourseId == (UInt32)number
-                select c;
-            if(same_course.Count() > 0)
-            {
-                return Json(new { success = false });
-            }
             var cid =
                 from c in db.Classes orderby c.ClassId descending select c.ClassId;
+            var course =
+                from j in db.Courses
+                where j.Number == number
+                && j.Abbr == subject
+                select j;
             Classes new_class = new Classes();
             new_class.ClassId = cid.SingleOrDefault() + 1;
             new_class.CourseId = (UInt32)number;
+            new_class.Course = course.SingleOrDefault();
             new_class.Start = start.TimeOfDay;
             new_class.End = end.TimeOfDay;
             new_class.Location = location;
             new_class.Semester = season + year.ToString();
             new_class.UId = instructor;
+            db.Classes.Add(new_class);
             try
             {
-                db.Classes.Add(new_class);
                 db.SaveChanges();
                 return Json(new { success = true });
             }
@@ -181,8 +199,6 @@ namespace LMS.Controllers
             }
         }
 
-
         /*******End code to modify********/
-
     }
 }

@@ -218,14 +218,14 @@ namespace LMS.Controllers
             // TODO: Implement
             string semester = season + year.ToString();
             //check if category already exists
-            var other_cats =
+            var check =
                 from oc in db.AssignmentCategories
                 where oc.Name == category
                     && oc.ClassNavigation.Semester == semester
                     && oc.ClassNavigation.Course.Number == num
                     && oc.ClassNavigation.Course.Abbr == subject
                 select oc.CatId;
-            if (other_cats.ToArray().Count() > 0)
+            if (check.ToArray().Count() > 0)
             {
                 return Json(new { success = false });
             }
@@ -417,7 +417,6 @@ namespace LMS.Controllers
                  select e).SingleOrDefault();
 
             enrollment_record.Grade = ReCalculateClassGradeForStudent(subject, num, season, year, category, enrollment_record.UId);
-
 
             try
             {

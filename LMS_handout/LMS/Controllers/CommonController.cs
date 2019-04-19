@@ -114,6 +114,8 @@ namespace LMS.Controllers
             // TODO: Implement
             var query =
                 from c in db.Classes
+                where c.Course.Abbr == subject
+                && c.Course.Number == number
                 join p in db.Professors
                 on c.UId equals p.UId
                 select new
@@ -219,7 +221,7 @@ namespace LMS.Controllers
                     uid = a.UId
                 };
             if(record.Count() > 0)
-                return Json(record.ToArray());
+                return Json(record);
 
             var record2 =
                 from p in db.Professors
@@ -232,7 +234,7 @@ namespace LMS.Controllers
                     department = p.MajorNavigation.Name
                 };
             if (record2.Count() > 0)
-                return Json(record2.ToArray());
+                return Json(record2);
 
             var record3 =
                 from s in db.Students
@@ -245,7 +247,7 @@ namespace LMS.Controllers
                     department = s.MajorNavigation.Name
                 };
             if (record3.Count() > 0)
-                return Json(record3.ToArray());
+                return Json(record3);
 
             return Json(new { success = false });
         }

@@ -488,11 +488,20 @@ namespace LMS.Controllers
         public string CreateNewUser(string fName, string lName, DateTime DOB, string SubjectAbbrev, string role)
         {
             // TODO: Implement
-            var prevUID = from id in db.Uids orderby id.UId descending select id;
-            UInt32 lastUID = UInt32.Parse(prevUID.SingleOrDefault().UId.Substring(1));
+            UInt32 lastUID = 0;
+            var prevUID =
+                from id in db.Uids
+                orderby id.UId
+                descending
+                select id.UId;
+            var prevUID_enum = prevUID.GetEnumerator();
+            if (prevUID.Count() > 0)
+            {
+                prevUID_enum.MoveNext();
+                lastUID = UInt32.Parse(prevUID_enum.Current.Substring(1));
+            }
             UInt32 nextUID = lastUID + 1;
             string ret = "u" + nextUID.ToString("D7");
-            // TODO: update UIDs table with columns(uID, Type) values(ret, role) where Type is varchar(5) ex. admin, stud, prof
             Uids u = new Uids();
             u.UId = ret;
             u.Type = role;
@@ -509,23 +518,33 @@ namespace LMS.Controllers
 
             else if (role == "Student")
             {
+                var dept =
+                    from d in db.Departments
+                    where d.Abbr == SubjectAbbrev
+                    select d;
                 Students s = new Students();
                 s.UId = ret;
                 s.First = fName;
                 s.Last = lName;
                 s.Dob = DOB;
                 s.Major = SubjectAbbrev;
+                s.MajorNavigation = dept.SingleOrDefault();
                 db.Students.Add(s);
             }
 
             else if (role == "Professor")
             {
+                var dept =
+                    from d in db.Departments
+                    where d.Abbr == SubjectAbbrev
+                    select d;
                 Professors p = new Professors();
                 p.UId = ret;
                 p.First = fName;
                 p.Last = lName;
                 p.Dob = DOB;
                 p.Major = SubjectAbbrev;
+                p.MajorNavigation = dept.SingleOrDefault();
                 db.Professors.Add(p);
             }
 
@@ -536,7 +555,7 @@ namespace LMS.Controllers
             }
             catch
             {
-                return "fail";
+                return "";
             }
 
         }
