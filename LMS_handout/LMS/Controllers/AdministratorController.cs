@@ -172,6 +172,7 @@ namespace LMS.Controllers
             try
             {
                 db.Classes.Add(new_class);
+                db.SaveChanges();
                 return Json(new { success = true });
             }
             catch

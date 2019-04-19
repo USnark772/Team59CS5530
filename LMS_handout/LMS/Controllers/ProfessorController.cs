@@ -108,7 +108,28 @@ namespace LMS.Controllers
         public IActionResult GetStudentsInClass(string subject, int num, string season, int year)
         {
             // TODO: Implement
-            return Json(null);
+            string semester = season + year.ToString();
+            //select classId from classes
+            //join with Enrolled and Students
+            //select fname, lname, uid, dob, grade
+            var classId_query =
+                from c in db.Classes
+                where c.Course.Abbr == subject && c.Course.Number == num && c.Semester == semester
+                select c.ClassId;
+            UInt32 classId = classId_query.SingleOrDefault();
+            var query =
+                from e in db.Enrolled
+                where e.Class == classId
+                select new
+                {
+                    fname = e.U.First,
+                    lname = e.U.Last,
+                    uid = e.U.UId,
+                    dob = e.U.Dob,
+                    grade = e.Grade
+                };
+            
+            return Json(query.ToArray());
         }
 
 
@@ -132,7 +153,23 @@ namespace LMS.Controllers
         public IActionResult GetAssignmentsInCategory(string subject, int num, string season, int year, string category)
         {
             // TODO: Implement
-            return Json(null);
+
+            string semester = season + year.ToString();
+
+            var query =
+                from a in db.Assignments
+                where a.Cat.Name == category 
+                    && a.Cat.ClassNavigation.Semester == semester 
+                    && a.Cat.ClassNavigation.Course.Abbr == subject 
+                    && a.Cat.ClassNavigation.Course.Number == num
+                select new
+                {
+                    aname = a.Name,
+                    cname = a.Cat.Name,
+                    due = a.DueDate,
+                    submissions = a.Submissions.Count()
+                };
+            return Json(query.ToArray());
         }
 
 
@@ -151,7 +188,18 @@ namespace LMS.Controllers
         public IActionResult GetAssignmentCategories(string subject, int num, string season, int year)
         {
             // TODO: Implement
-            return Json(null);
+            string semester = season + year.ToString();
+            var query =
+                from a in db.AssignmentCategories
+                where a.ClassNavigation.Semester == semester
+                    && a.ClassNavigation.Course.Abbr == subject
+                    && a.ClassNavigation.Course.Number == num
+                select new
+                {
+                    name = a.Name,
+                    weight = a.Weight
+                };
+            return Json(query.ToArray());
         }
 
         /// <summary>
@@ -168,7 +216,49 @@ namespace LMS.Controllers
         public IActionResult CreateAssignmentCategory(string subject, int num, string season, int year, string category, int catweight)
         {
             // TODO: Implement
-            return Json(new { success = false });
+            string semester = season + year.ToString();
+            //check if category already exists
+            var other_cats =
+                from oc in db.AssignmentCategories
+                where oc.Name == category 
+                    && oc.ClassNavigation.Semester == semester 
+                    && oc.ClassNavigation.Course.Number == num 
+                    && oc.ClassNavigation.Course.Abbr == subject
+                select oc.CatId;
+            if (other_cats.ToArray().Count() > 0)
+            {
+                return Json(new { success = false });
+            }
+
+            var catID = 
+                from ac in db.AssignmentCategories
+                orderby ac.CatId descending
+                select ac.CatId;
+            var classID =
+                from c in db.Classes
+                where c.Semester == semester
+                    && c.Course.Number == num
+                    && c.Course.Abbr == subject
+                select c.ClassId;
+
+            AssignmentCategories new_cat = new AssignmentCategories();
+            new_cat.CatId = catID.SingleOrDefault() + 1;
+            new_cat.Name = category;
+            new_cat.Weight = (UInt32)catweight;
+            new_cat.Class = classID.SingleOrDefault();
+            db.AssignmentCategories.Add(new_cat);
+
+            try
+            {
+                db.SaveChanges();
+                return Json(new { success = true });
+            }
+            catch
+            {
+                return Json(new { success = false });
+            }
+
+            
         }
 
         /// <summary>
@@ -187,7 +277,37 @@ namespace LMS.Controllers
         public IActionResult CreateAssignment(string subject, int num, string season, int year, string category, string asgname, int asgpoints, DateTime asgdue, string asgcontents)
         {
             // TODO: Implement
-            return Json(new { success = false });
+            string semester = season + year.ToString();
+            var catID =
+                from ac in db.AssignmentCategories
+                where ac.Name == category
+                && ac.ClassNavigation.Semester == semester
+                && ac.ClassNavigation.Course.Number == num
+                && ac.ClassNavigation.Course.Abbr == subject
+                select ac.CatId;
+            var aID =
+                from a in db.Assignments
+                orderby a.AId descending
+                select a.AId;
+            Assignments new_assign = new Assignments();
+            new_assign.AId = aID.SingleOrDefault();
+            new_assign.Name = asgname;
+            new_assign.Value = (UInt32)asgpoints;
+            new_assign.Contents = asgcontents;
+            new_assign.DueDate = asgdue;
+            new_assign.CatId = catID.SingleOrDefault();
+            db.Assignments.Add(new_assign);
+
+            try
+            {
+                db.SaveChanges();
+                return Json(new { success = true });
+            }
+            catch
+            {
+                return Json(new { success = false });
+            }
+            
         }
 
 
@@ -211,7 +331,23 @@ namespace LMS.Controllers
         public IActionResult GetSubmissionsToAssignment(string subject, int num, string season, int year, string category, string asgname)
         {
             // TODO: Implement
-            return Json(null);
+            string semester = season + year.ToString();
+            var query =
+                from s in db.Submissions
+                where s.A.Name == asgname
+                    && s.A.Cat.Name == category
+                    && s.A.Cat.ClassNavigation.Semester == semester
+                    && s.A.Cat.ClassNavigation.Course.Number == num
+                    && s.A.Cat.ClassNavigation.Course.Abbr == subject
+                select new
+                {
+                    fname = s.U.First,
+                    lname = s.U.Last,
+                    uid = s.U.UId,
+                    time = s.SubDate,
+                    score = s.Score
+                };
+            return Json(query.ToArray());
         }
 
 
@@ -230,7 +366,31 @@ namespace LMS.Controllers
         public IActionResult GradeSubmission(string subject, int num, string season, int year, string category, string asgname, string uid, int score)
         {
             // TODO: Implement
-            return Json(new { success = true });
+            string semester = season + year.ToString();
+            var query =
+                from s in db.Submissions
+                where s.UId == uid
+                    && s.A.Name == asgname
+                    && s.A.Cat.Name == category
+                    && s.A.Cat.ClassNavigation.Semester == semester
+                    && s.A.Cat.ClassNavigation.Course.Number == num
+                    && s.A.Cat.ClassNavigation.Course.Abbr == subject
+                select s;
+            Submissions sub = query.SingleOrDefault();
+            if(sub != null)
+            {
+                sub.Score = (UInt32)score;
+            }
+            try
+            {
+                db.SaveChanges();
+                return Json(new { success = true });
+            }
+            catch
+            {
+                return Json(new { success = false });
+            }
+            
         }
 
 
