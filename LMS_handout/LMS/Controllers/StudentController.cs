@@ -70,7 +70,19 @@ namespace LMS.Controllers
         public IActionResult GetMyClasses(string uid)
         {
             // TODO: Implement
-            return Json(null);
+            var query =
+                from c in db.Enrolled
+                where c.UId == uid
+                select new
+                {
+                    subject = c.ClassNavigation.Course.Abbr,
+                    number = c.ClassNavigation.Course.Number,
+                    name = c.ClassNavigation.Course.Name,
+                    season = c.ClassNavigation.Semester.Substring(0, c.ClassNavigation.Semester.Length - 4),
+                    year = c.ClassNavigation.Semester.Substring(c.ClassNavigation.Semester.Length - 4),
+                    grade = c.Grade
+                };
+            return Json(query.ToString());
         }
 
         /// <summary>
@@ -90,7 +102,22 @@ namespace LMS.Controllers
         public IActionResult GetAssignmentsInClass(string subject, int num, string season, int year, string uid)
         {
             // TODO: Implement
-            return Json(null);
+            string semester = season + year.ToString();
+            var query =
+                from a in db.Assignments
+                join e in db.Enrolled
+                on a.Cat.ClassNavigation.ClassId equals e.Class
+                where a.Cat.ClassNavigation.Course.Abbr == subject
+                && a.Cat.ClassNavigation.Course.Number == num
+                && a.Cat.ClassNavigation.Semester == semester
+                select new
+                {
+                    aname = a.Name,
+                    cname = a.Cat.Name,
+                    due = a.DueDate,
+                    score = a.Value
+                };
+            return Json(query.ToArray());
         }
 
 
@@ -116,6 +143,22 @@ namespace LMS.Controllers
           string category, string asgname, string uid, string contents)
         {
             // TODO: Implement
+            string semester = season + year.ToString();
+
+            var class_subs =
+                from s in db.Submissions
+                where s.UId == uid
+                && s.A.Cat.ClassNavigation.Course.Abbr == subject
+                && s.A.Cat.ClassNavigation.Course.Number == num
+                && s.A.Cat.ClassNavigation.Semester == semester
+                && s.A.Cat.Name == category
+                && s.A.Name == asgname
+                select s;
+            if(class_subs.Count() > 0)
+            {
+                // TODO: Finish this
+            }
+
             return Json(new { success = false });
         }
 
@@ -133,7 +176,35 @@ namespace LMS.Controllers
         public IActionResult Enroll(string subject, int num, string season, int year, string uid)
         {
             // TODO: Implement
-            return Json(new { success = false });
+            var check =
+                from e in db.Enrolled
+                where e.UId == uid
+                && e.ClassNavigation.Semester == season + year.ToString()
+                && e.ClassNavigation.Course.Number == num
+                && e.ClassNavigation.Course.Abbr == subject
+                select e;
+            if (check.Count() > 0)
+            {
+                return Json(new { success = false });
+            }
+            var oldID =
+                (from e in db.Enrolled
+                 orderby e.EId
+                 select e.EId).SingleOrDefault();
+            Enrolled new_enroll = new Enrolled();
+            new_enroll.Class = (UInt32)num;
+            new_enroll.UId = uid;
+            new_enroll.Grade = "0";
+            new_enroll.EId = oldID + 1;
+            try
+            {
+                db.SaveChanges();
+                return Json(new { success = true });
+            }
+            catch
+            {
+                return Json(new { success = false });
+            }
         }
 
 

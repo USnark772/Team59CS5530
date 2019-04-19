@@ -147,10 +147,10 @@ namespace LMS.Controllers
             var query =
                 from a in db.Assignments
                 where a.Cat.ClassNavigation.Course.AbbrNavigation.Abbr == subject
-                where a.Cat.ClassNavigation.Semester == season + year.ToString()
-                where a.Cat.ClassNavigation.CourseId == num
-                where a.Cat.Name == category
-                where a.Name == asgname
+                && a.Cat.ClassNavigation.Semester == season + year.ToString()
+                && a.Cat.ClassNavigation.Course.Number == num
+                && a.Cat.Name == category
+                && a.Name == asgname
                 select a.Contents;
             return Content(query.SingleOrDefault());
         }
@@ -173,8 +173,20 @@ namespace LMS.Controllers
         public IActionResult GetSubmissionText(string subject, int num, string season, int year, string category, string asgname, string uid)
         {
             // TODO: Implement
-
-            return Content("");
+            string semester = season + year.ToString();
+            string text = "";
+            var query =
+                from s in db.Submissions
+                where s.UId == uid
+                && s.A.Name == asgname
+                && s.A.Cat.Name == category
+                && s.A.Cat.ClassNavigation.Semester == semester
+                && s.A.Cat.ClassNavigation.Course.Number == num
+                && s.A.Cat.ClassNavigation.Course.Abbr == subject
+                select s;
+            if (query.Count() > 0)
+                text = query.SingleOrDefault().Contents;
+            return Content(text);
         }
 
 
@@ -197,6 +209,44 @@ namespace LMS.Controllers
         public IActionResult GetUser(string uid)
         {
             // TODO: Implement
+            var record =
+                from a in db.Administrators
+                where a.UId == uid
+                select new
+                {
+                    fname = a.First,
+                    lname = a.Last,
+                    uid = a.UId
+                };
+            if(record.Count() > 0)
+                return Json(record.ToArray());
+
+            var record2 =
+                from p in db.Professors
+                where p.UId == uid
+                select new
+                {
+                    fname = p.First,
+                    lname = p.Last,
+                    uid = p.UId,
+                    department = p.MajorNavigation.Name
+                };
+            if (record2.Count() > 0)
+                return Json(record2.ToArray());
+
+            var record3 =
+                from s in db.Students
+                where s.UId == uid
+                select new
+                {
+                    fname = s.First,
+                    lname = s.Last,
+                    uid = s.UId,
+                    department = s.MajorNavigation.Name
+                };
+            if (record3.Count() > 0)
+                return Json(record3.ToArray());
+
             return Json(new { success = false });
         }
 
