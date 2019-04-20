@@ -465,6 +465,7 @@ namespace LMS.Controllers
             string semester = season + year.ToString();
             string class_grade;
             float? grade = 0;
+            UInt32? weight_sum = 0;
             var all_categories =
                 from c in db.AssignmentCategories
                 where c.ClassNavigation.Course.Number == num
@@ -498,8 +499,10 @@ namespace LMS.Controllers
                 {
                     values_sum += (UInt32)assign_val;
                 }
+                weight_sum += item.Weight;
                 grade += (score_sum / values_sum) * item.Weight;
             }
+            grade = grade * (100 / weight_sum);
 
             if (grade >= 93)
                 class_grade = "A";

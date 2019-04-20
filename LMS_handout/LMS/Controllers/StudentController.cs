@@ -108,8 +108,8 @@ namespace LMS.Controllers
                 join e in db.Enrolled
                 on a.Cat.ClassNavigation.ClassId equals e.Class
                 where a.Cat.ClassNavigation.Course.Abbr == subject
-                && a.Cat.ClassNavigation.Course.Number == num
-                && a.Cat.ClassNavigation.Semester == semester
+                    && a.Cat.ClassNavigation.Course.Number == num
+                    && a.Cat.ClassNavigation.Semester == semester
                 select new
                 {
                     aname = a.Name,
@@ -143,23 +143,58 @@ namespace LMS.Controllers
           string category, string asgname, string uid, string contents)
         {
             // TODO: Implement
+            //done but untested
             string semester = season + year.ToString();
+            Submissions sub;
 
             var class_subs =
                 from s in db.Submissions
                 where s.UId == uid
-                && s.A.Cat.ClassNavigation.Course.Abbr == subject
-                && s.A.Cat.ClassNavigation.Course.Number == num
-                && s.A.Cat.ClassNavigation.Semester == semester
-                && s.A.Cat.Name == category
-                && s.A.Name == asgname
+                    && s.A.Cat.ClassNavigation.Course.Abbr == subject
+                    && s.A.Cat.ClassNavigation.Course.Number == num
+                    && s.A.Cat.ClassNavigation.Semester == semester
+                    && s.A.Cat.Name == category
+                    && s.A.Name == asgname
                 select s;
             if(class_subs.Count() > 0)
             {
                 // TODO: Finish this
+                sub = class_subs.SingleOrDefault();
+                sub.Contents = contents;
+                sub.SubDate = DateTime.Now;
+            }
+            else
+            {
+                var subID =
+                    from s in db.Submissions
+                    orderby s.SId descending
+                    select s.SId;
+                sub = new Submissions();
+                sub.SId = subID.SingleOrDefault() + 1;
+                sub.Contents = contents;
+                sub.SubDate = DateTime.Now;
+                sub.Score = 0;
+                sub.UId = uid;
+                sub.AId = (from a in db.Assignments
+                          where a.Name == asgname
+                            && a.Cat.Name == category
+                            && a.Cat.ClassNavigation.Semester == semester
+                            && a.Cat.ClassNavigation.Course.Abbr == subject
+                            && a.Cat.ClassNavigation.Course.Number == num
+                          select a.AId).SingleOrDefault();
+
+                db.Submissions.Add(sub);
             }
 
-            return Json(new { success = false });
+            try
+            {
+                db.SaveChanges();
+                return Json(new { success = true });
+            }
+            catch
+            {
+                return Json(new { success = false });
+            }
         }
 
 
@@ -224,7 +259,80 @@ namespace LMS.Controllers
         public IActionResult GetGPA(string uid)
         {
             // TODO: Implement
-            return Json(null);
+            //done but untested
+            Double gpaVal = 0.0;
+            int gradeCount = 0;
+            var query =
+                from s in db.Students
+                where s.UId == uid
+                select s.Enrolled;
+            foreach (Enrolled e in query)
+            {
+
+                if (e.Grade == "A")
+                {
+                    gpaVal += 4.0;
+                    gradeCount++;
+                }
+                else if (e.Grade == "A-")
+                {
+                    gpaVal += 3.7;
+                    gradeCount++;
+                }
+                else if (e.Grade == "B+")
+                {
+                    gpaVal += 3.3;
+                    gradeCount++;
+                }
+                else if (e.Grade == "B")
+                {
+                    gpaVal += 3.0;
+                    gradeCount++;
+                }
+                else if (e.Grade == "B-")
+                {
+                    gpaVal += 2.7;
+                    gradeCount++;
+                }
+                else if (e.Grade == "C+")
+                {
+                    gpaVal += 2.3;
+                    gradeCount++;
+                }
+                else if (e.Grade == "C")
+                {
+                    gpaVal += 2.0;
+                    gradeCount++;
+                }
+                else if (e.Grade == "C-")
+                {
+                    gpaVal += 1.7;
+                    gradeCount++;
+                }
+                else if (e.Grade == "D+")
+                {
+                    gpaVal += 1.3;
+                    gradeCount++;
+                }
+                else if (e.Grade == "D")
+                {
+                    gpaVal += 1.0;
+                    gradeCount++;
+                }
+                else if (e.Grade == "D-")
+                {
+                    gpaVal += 0.7;
+                    gradeCount++;
+                }
+                else if (e.Grade == "E")
+                {
+                    gpaVal += 0.0;
+                    gradeCount++;
+                }
+            }
+            gpaVal = gpaVal / gradeCount;
+            var retval = new { gpa = gpaVal };
+            return Json(retval);
         }
 
         /*******End code to modify********/
