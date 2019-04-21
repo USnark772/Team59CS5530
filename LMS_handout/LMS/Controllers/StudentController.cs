@@ -82,7 +82,7 @@ namespace LMS.Controllers
                     year = c.ClassNavigation.Semester.Substring(c.ClassNavigation.Semester.Length - 4),
                     grade = c.Grade
                 };
-            return Json(query.ToString());
+            return Json(query.ToArray());
         }
 
         /// <summary>
@@ -156,7 +156,7 @@ namespace LMS.Controllers
                     && s.A.Cat.Name == category
                     && s.A.Name == asgname
                 select s;
-            if(class_subs.Count() > 0)
+            if (class_subs.Count() > 0)
             {
                 // TODO: Finish this
                 sub = class_subs.SingleOrDefault();
@@ -176,12 +176,12 @@ namespace LMS.Controllers
                 sub.Score = 0;
                 sub.UId = uid;
                 sub.AId = (from a in db.Assignments
-                          where a.Name == asgname
-                            && a.Cat.Name == category
-                            && a.Cat.ClassNavigation.Semester == semester
-                            && a.Cat.ClassNavigation.Course.Abbr == subject
-                            && a.Cat.ClassNavigation.Course.Number == num
-                          select a.AId).SingleOrDefault();
+                           where a.Name == asgname
+                             && a.Cat.Name == category
+                             && a.Cat.ClassNavigation.Semester == semester
+                             && a.Cat.ClassNavigation.Course.Abbr == subject
+                             && a.Cat.ClassNavigation.Course.Number == num
+                           select a.AId).SingleOrDefault();
 
                 db.Submissions.Add(sub);
             }
@@ -223,21 +223,27 @@ namespace LMS.Controllers
                 return Json(new { success = false });
             }
             var oldID =
-                (from e in db.Enrolled
-                 orderby e.EId
-                 select e.EId).SingleOrDefault();
+                from e in db.Enrolled
+                 orderby e.EId descending
+                 select e.EId;
+            var oldID_enum = oldID.GetEnumerator();
+            oldID_enum.MoveNext();
+            var classID =
+                from c in db.Classes
+                where c.Course.Number == num
+                select c.ClassId;
             Enrolled new_enroll = new Enrolled();
-            new_enroll.Class = (UInt32)num;
+            new_enroll.Class = classID.SingleOrDefault();
             new_enroll.UId = uid;
             new_enroll.Grade = "0";
-            new_enroll.EId = oldID + 1;
+            new_enroll.EId = oldID_enum.Current + 1;
             db.Enrolled.Add(new_enroll);
             try
             {
                 db.SaveChanges();
                 return Json(new { success = true });
             }
-            catch
+            catch(Exception e)
             {
                 return Json(new { success = false });
             }
@@ -263,10 +269,16 @@ namespace LMS.Controllers
             Double gpaVal = 0.0;
             int gradeCount = 0;
             var query =
+                from e in db.Enrolled
+                where e.UId == uid
+                select e;
+            /*
+            var query =
                 from s in db.Students
                 where s.UId == uid
                 select s.Enrolled;
-            foreach (Enrolled e in query)
+            */
+            foreach (var e in query)
             {
 
                 if (e.Grade == "A")
@@ -330,7 +342,8 @@ namespace LMS.Controllers
                     gradeCount++;
                 }
             }
-            gpaVal = gpaVal / gradeCount;
+            if (gradeCount > 0)
+                gpaVal = gpaVal / gradeCount;
             var retval = new { gpa = gpaVal };
             return Json(retval);
         }

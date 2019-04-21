@@ -179,7 +179,9 @@ namespace LMS.Controllers
                 && j.Abbr == subject
                 select j;
             Classes new_class = new Classes();
-            new_class.ClassId = cid.SingleOrDefault() + 1;
+            var cid_enum = cid.GetEnumerator();
+            cid_enum.MoveNext();
+            new_class.ClassId = cid_enum.Current + 1;
             new_class.CourseId = (UInt32)number;
             new_class.Course = course.SingleOrDefault();
             new_class.Start = start.TimeOfDay;

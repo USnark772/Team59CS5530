@@ -45,6 +45,7 @@
             alert("An error occured when loading user's information");
           }
           else {
+            //alert(JSON.stringify(data));
             ProfessorInfo.innerText = data.fname + " " + data.lname + "    " + data.uid;
             Department.innerText = "Department: " + data.department;
           }
