@@ -105,6 +105,25 @@ namespace LMS.Controllers
             string semester = season + year.ToString();
             var query =
                 from a in db.Assignments
+                where a.Cat.ClassNavigation.ClassId == (from e in db.Enrolled
+                                                        where e.UId == uid
+                                                        && e.ClassNavigation.Course.Abbr == subject
+                                                        && e.ClassNavigation.Course.Number == num
+                                                        && e.ClassNavigation.Semester == semester
+                                                        select e.Class).SingleOrDefault()
+                && a.Cat.ClassNavigation.Course.Abbr == subject
+                && a.Cat.ClassNavigation.Course.Number == num
+                && a.Cat.ClassNavigation.Semester == semester
+                select new
+                {
+                    aname = a.Name,
+                    cname = a.Cat.Name,
+                    due = a.DueDate,
+                    score = a.Value
+                };
+            /*
+                var query =
+                from a in db.Assignments
                 join e in db.Enrolled
                 on a.Cat.ClassNavigation.ClassId equals e.Class
                 where a.Cat.ClassNavigation.Course.Abbr == subject
@@ -117,6 +136,7 @@ namespace LMS.Controllers
                     due = a.DueDate,
                     score = a.Value
                 };
+            */
             return Json(query.ToArray());
         }
 
