@@ -121,22 +121,6 @@ namespace LMS.Controllers
                     due = a.DueDate,
                     score = a.Value
                 };
-            /*
-                var query =
-                from a in db.Assignments
-                join e in db.Enrolled
-                on a.Cat.ClassNavigation.ClassId equals e.Class
-                where a.Cat.ClassNavigation.Course.Abbr == subject
-                    && a.Cat.ClassNavigation.Course.Number == num
-                    && a.Cat.ClassNavigation.Semester == semester
-                select new
-                {
-                    aname = a.Name,
-                    cname = a.Cat.Name,
-                    due = a.DueDate,
-                    score = a.Value
-                };
-            */
             return Json(query.ToArray());
         }
 
