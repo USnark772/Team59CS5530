@@ -540,7 +540,7 @@ namespace LMS.Controllers
                 }
                 weight_sum += current_category.Weight;
                 if (values_sum > 0)
-                    grade += (score_sum / values_sum) * current_category.Weight;
+                    grade += (((float)score_sum / (float)values_sum) * current_category.Weight);
             }
             grade = grade * (100 / weight_sum);
 
