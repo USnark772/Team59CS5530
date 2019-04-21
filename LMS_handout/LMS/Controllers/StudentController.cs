@@ -103,6 +103,7 @@ namespace LMS.Controllers
         {
             // TODO: Implement
             string semester = season + year.ToString();
+
             var query =
                 from a in db.Assignments
                 where a.Cat.ClassNavigation.ClassId == (from e in db.Enrolled
@@ -119,7 +120,14 @@ namespace LMS.Controllers
                     aname = a.Name,
                     cname = a.Cat.Name,
                     due = a.DueDate,
-                    score = a.Value
+                    score = (from s in db.Submissions
+                            where s.UId == uid
+                                && s.A.Name == a.Name
+                                && s.A.Cat.Name == a.Cat.Name
+                                && s.A.Cat.ClassNavigation.Semester == semester
+                                && s.A.Cat.ClassNavigation.Course.Abbr == subject
+                                && s.A.Cat.ClassNavigation.Course.Number == num
+                            select s.Score).SingleOrDefault()
                 };
             return Json(query.ToArray());
         }
