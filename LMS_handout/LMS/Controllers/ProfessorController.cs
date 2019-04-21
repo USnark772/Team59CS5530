@@ -241,8 +241,11 @@ namespace LMS.Controllers
                     && c.Course.Abbr == subject
                 select c.ClassId;
 
+            var catID_enum = catID.GetEnumerator();
+            catID_enum.MoveNext();
+
             AssignmentCategories new_cat = new AssignmentCategories();
-            new_cat.CatId = catID.SingleOrDefault() + 1;
+            new_cat.CatId = catID_enum.Current + 1;
             new_cat.Name = category;
             new_cat.Weight = (UInt32)catweight;
             new_cat.Class = classID.SingleOrDefault();

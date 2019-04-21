@@ -156,6 +156,7 @@ namespace LMS.Controllers
                     && s.A.Cat.Name == category
                     && s.A.Name == asgname
                 select s;
+
             if (class_subs.Count() > 0)
             {
                 // TODO: Finish this
@@ -169,8 +170,10 @@ namespace LMS.Controllers
                     from s in db.Submissions
                     orderby s.SId descending
                     select s.SId;
+                var subID_enum = subID.GetEnumerator();
+                subID_enum.MoveNext();
                 sub = new Submissions();
-                sub.SId = subID.SingleOrDefault() + 1;
+                sub.SId = subID_enum.Current + 1;
                 sub.Contents = contents;
                 sub.SubDate = DateTime.Now;
                 sub.Score = 0;

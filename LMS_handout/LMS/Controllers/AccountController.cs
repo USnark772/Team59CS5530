@@ -553,8 +553,9 @@ namespace LMS.Controllers
                 db.SaveChanges();
                 return ret;
             }
-            catch
+            catch (Exception e)
             {
+                Console.WriteLine(e);
                 return "";
             }
 
