@@ -153,23 +153,40 @@ namespace LMS.Controllers
         public IActionResult GetAssignmentsInCategory(string subject, int num, string season, int year, string category)
         {
             // TODO: Implement
-
             string semester = season + year.ToString();
-
-            var query =
-                from a in db.Assignments
-                where a.Cat.Name == category
+            if (category == null)
+            {
+                var query =
+                    from a in db.Assignments
+                    where a.Cat.ClassNavigation.Semester == semester
+                    && a.Cat.ClassNavigation.Course.Abbr == subject
+                    && a.Cat.ClassNavigation.Course.Number == num
+                    select new
+                    {
+                        aname = a.Name,
+                        cname = a.Cat.Name,
+                        due = a.DueDate,
+                        submissions = a.Submissions.Count()
+                    };
+                return Json(query.ToArray());
+            }
+            else
+            {
+                var query =
+                    from a in db.Assignments
+                    where a.Cat.Name == category
                     && a.Cat.ClassNavigation.Semester == semester
                     && a.Cat.ClassNavigation.Course.Abbr == subject
                     && a.Cat.ClassNavigation.Course.Number == num
-                select new
-                {
-                    aname = a.Name,
-                    cname = a.Cat.Name,
-                    due = a.DueDate,
-                    submissions = a.Submissions.Count()
-                };
-            return Json(query.ToArray());
+                    select new
+                    {
+                        aname = a.Name,
+                        cname = a.Cat.Name,
+                        due = a.DueDate,
+                        submissions = a.Submissions.Count()
+                    };
+                return Json(query.ToArray());
+            }
         }
 
 
