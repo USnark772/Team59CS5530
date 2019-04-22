@@ -494,7 +494,7 @@ namespace LMS.Controllers
                 (from id in db.Uids
                 orderby id.UId
                 descending
-                select id.UId).Take(1).SingleOrDefault();
+                select id.UId).FirstOrDefault();
             lastUID = UInt32.Parse(prevUID.Substring(1));
             UInt32 nextUID = lastUID + 1;
             string ret = "u" + nextUID.ToString("D7");

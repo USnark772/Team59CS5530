@@ -337,7 +337,7 @@ namespace LMS.Controllers
             var aID =
                 (from a in db.Assignments
                  orderby a.AId descending
-                 select a.AId).Take(1).SingleOrDefault();
+                 select a.AId).FirstOrDefault();
             Assignments new_assign = new Assignments();
             new_assign.AId = aID + 1;
             new_assign.Name = asgname;
