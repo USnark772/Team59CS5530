@@ -489,17 +489,13 @@ namespace LMS.Controllers
         {
             // TODO: Implement
             UInt32 lastUID = 0;
+
             var prevUID =
-                from id in db.Uids
+                (from id in db.Uids
                 orderby id.UId
                 descending
-                select id.UId;
-            var prevUID_enum = prevUID.GetEnumerator();
-            if (prevUID.Count() > 0)
-            {
-                prevUID_enum.MoveNext();
-                lastUID = UInt32.Parse(prevUID_enum.Current.Substring(1));
-            }
+                select id.UId).Take(1).SingleOrDefault();
+            lastUID = UInt32.Parse(prevUID.Substring(1));
             UInt32 nextUID = lastUID + 1;
             string ret = "u" + nextUID.ToString("D7");
             Uids u = new Uids();

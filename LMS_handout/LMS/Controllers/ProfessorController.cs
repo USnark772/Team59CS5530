@@ -268,6 +268,7 @@ namespace LMS.Controllers
             new_cat.Class = classID.SingleOrDefault();
             db.AssignmentCategories.Add(new_cat);
 
+            /*
             try
             {
                 db.SaveChanges();
@@ -276,7 +277,6 @@ namespace LMS.Controllers
             {
                 return Json(new { success = false });
             }
-
             var class_roster =
                 (from e in db.Enrolled
                  where e.ClassNavigation.Course.Number == num
@@ -288,7 +288,7 @@ namespace LMS.Controllers
             {
                 item.Grade = ReCalculateClassGradeForStudent(subject, num, season, year, category, item.UId);
             }
-
+            */
             try
             {
                 db.SaveChanges();
@@ -319,32 +319,39 @@ namespace LMS.Controllers
             // TODO: Implement
             string semester = season + year.ToString();
             var catID =
-                from ac in db.AssignmentCategories
-                where ac.Name == category
-                && ac.ClassNavigation.Semester == semester
-                && ac.ClassNavigation.Course.Number == num
-                && ac.ClassNavigation.Course.Abbr == subject
-                select ac.CatId;
-            var aID =
+                (from ac in db.AssignmentCategories
+                 where ac.Name == category
+                 && ac.ClassNavigation.Semester == semester
+                 && ac.ClassNavigation.Course.Number == num
+                 && ac.ClassNavigation.Course.Abbr == subject
+                 select ac.CatId).Take(1).Single();
+            var check =
                 from a in db.Assignments
-                orderby a.AId descending
-                select a.AId;
-            var aID_enum = aID.GetEnumerator();
-            aID_enum.MoveNext();
+                where a.Name == asgname
+                && a.CatId == catID
+                select a;
+            if(check.Count() > 0)
+            {
+                return Json(new { success = false });
+            }
+            var aID =
+                (from a in db.Assignments
+                 orderby a.AId descending
+                 select a.AId).Take(1).SingleOrDefault();
             Assignments new_assign = new Assignments();
-            new_assign.AId = aID_enum.Current + 1;
+            new_assign.AId = aID + 1;
             new_assign.Name = asgname;
             new_assign.Value = (UInt32)asgpoints;
             new_assign.Contents = asgcontents;
             new_assign.DueDate = asgdue;
-            new_assign.CatId = catID.SingleOrDefault();
+            new_assign.CatId = catID; // catID.SingleOrDefault(); // catID_enum.Current;
             db.Assignments.Add(new_assign);
 
             try
             {
                 db.SaveChanges();
             }
-            catch
+            catch (Exception e)
             {
                 return Json(new { success = false });
             }
@@ -364,7 +371,7 @@ namespace LMS.Controllers
                 db.SaveChanges();
                 return Json(new { success = true });
             }
-            catch
+            catch (Exception e)
             {
                 return Json(new { success = false });
             }
@@ -513,6 +520,20 @@ namespace LMS.Controllers
                 select c;
             foreach (var current_category in all_categories)
             {
+                var all_values =
+                    from a in db.Assignments
+                    where a.Cat.ClassNavigation.Semester == semester
+                    && a.Cat.ClassNavigation.Course.Number == num
+                    && a.Cat.ClassNavigation.Course.Abbr == subject
+                    && a.Cat.Name == current_category.Name
+                    select a.Value;
+                if (all_values.Count() == 0)
+                    continue;
+                UInt32 values_sum = 0;
+                foreach (var assign_val in all_values)
+                {
+                    values_sum += (UInt32)assign_val;
+                }
                 var all_scores =
                     from s in db.Submissions
                     where s.A.Cat.ClassNavigation.Semester == semester
@@ -526,24 +547,12 @@ namespace LMS.Controllers
                 {
                     score_sum += (UInt32)sub_score;
                 }
-                var all_values =
-                    from a in db.Assignments
-                    where a.Cat.ClassNavigation.Semester == semester
-                    && a.Cat.ClassNavigation.Course.Number == num
-                    && a.Cat.ClassNavigation.Course.Abbr == subject
-                    && a.Cat.Name == current_category.Name
-                    select a.Value;
-                UInt32 values_sum = 0;
-                foreach (var assign_val in all_values)
-                {
-                    values_sum += (UInt32)assign_val;
-                }
                 weight_sum += current_category.Weight;
                 if (values_sum > 0)
                     grade += (((float)score_sum / (float)values_sum) * current_category.Weight);
             }
             grade = grade * 100f / (float)weight_sum;
-            
+
             if (grade >= 93)
                 class_grade = "A";
             else if (grade >= 90 && grade < 93)
